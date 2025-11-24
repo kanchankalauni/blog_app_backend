@@ -1,14 +1,40 @@
 const express = require("express")
-
+const mongoose = require("mongoose")
+const cors = require("cors")
 const app = express();
 
 app.use(express.json())
+app.use(cors())
 
-let users = [];
+async function dbConnect() {
+    try {
+        await mongoose.connect("mongodb://127.0.0.1:27017/blogDatabase")
+        console.log("Db Connected successfully")
+    } catch (err) {
+        console.log("error occured while connecting DB")
+        console.log(err)
+    }
+}
+
+
+const userSchema = new mongoose.Schema({
+    name : String,
+    email : {
+        type : String,
+        unique : true
+    },
+    password : String
+})
+
+const User = mongoose.model("User", userSchema)
+
+
 
 // user routes
 
-app.post("/users", (req, res) => {
+// let users = [];
+
+app.post("/users", async (req, res) => {
     const {name, password, email} = req.body
     try {
         if (!name) {
@@ -29,16 +55,33 @@ app.post("/users", (req, res) => {
                 message : "Please enter the email"
             })
         }
-        users.push({...req.body, id : users.length + 1})
+
+        const checkForExistingUser = await User.findOne({email})
+
+        if(checkForExistingUser){
+            return res.status(400).json({
+                success : false,
+                message : "User already registered with this email",
+            })
+        }
+
+        // users.push({...req.body, id : users.length + 1})
+        const newUser = await User.create({
+            name,
+            email,
+            password
+        })
 
         return res.status(200).json({
             success : true,
-            message : "User created successfully"
+            message : "User created successfully",
+            newUser
         })
     } catch (err) {
         return res.status(500).json({
             success : false,
-            message : "Please try again"
+            message : "Please try again",
+            error : err.message
         })
     }
 })
@@ -156,4 +199,5 @@ app.delete("/blogs/:id", (req, res) => {
 
 app.listen(3000, () => {
     console.log("server started")
+    dbConnect()
 })
