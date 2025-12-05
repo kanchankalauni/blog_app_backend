@@ -1,40 +1,16 @@
 const express = require("express")
+const { createBlog, getAllBlog, getBlogById, updateBlog, deleteBlog } = require("../controllers/blogController")
 const route = express.Router()
 
-let blogs = []
 
-route.post("/blogs", (req, res) => {
-    blogs.push({...req.body, id : blogs.length + 1})
-    return res.json({"message" : "blog created successfully"})
-})
+route.post("/blogs", createBlog)
 
-route.get("/blogs", (req, res) => {
-    let publicBlogs = blogs.filter(blog => !blog.draft)
-    return res.json({publicBlogs})
-})
+route.get("/blogs", getAllBlog)
 
-route.get("/blogs/:id", (req, res) => {
-    const {id} = req.params
-    let searchBlog = blogs.filter(blog => blog.id == id)
-    return res.json({searchBlog})
-})
+route.get("/blogs/:id", getBlogById)
 
-route.put("/blogs/:id", (req, res) => {
-    const {id} = req.params
-    // let index = blogs.findIndex(blog => blog.id == id)
-    // blogs[index] = {...blogs[index], ...req.body}
+route.put("/blogs/:id", updateBlog)
 
-    let updatedBlogs = blogs.map((blog, index) => 
-        blog.id == id ? {...blogs[index], ...req.body} : blog
-        )
-    blogs = [...updatedBlogs]
-    return res.json({"message" : "blog updated successfully"})
-})
-
-route.delete("/blogs/:id", (req, res) => {
-    let filteredBlog = blogs.filter(blog => blog.id != req.params.id)
-    blogs = [...filteredBlog]
-    return res.status(200).json({"message" : "blog deleted successfully"})
-})
+route.delete("/blogs/:id", deleteBlog)
 
 module.exports = route
