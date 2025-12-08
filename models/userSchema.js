@@ -6,7 +6,13 @@ const userSchema = new mongoose.Schema({
             type : String,
             unique : true
         },
-        password : String
+        password : String,
+        blogs : [
+            {
+                type : mongoose.Schema.Types.ObjectId,
+                ref : "Blog"
+            }
+        ]
 })
 
 const User = mongoose.model("User", userSchema)
