@@ -1,34 +1,35 @@
 const User = require("../models/userSchema")
 const bcrypt = require("bcrypt")
+const { generateJWT } = require("../utils/generateToken")
 
 async function createUser(req, res) {
-    const {name, password, email} = req.body
+    const { name, password, email } = req.body
     try {
         if (!name) {
             return res.status(404).json({
-                success : false,
-                message : "Please enter the name"
+                success: false,
+                message: "Please enter the name"
             })
         }
         if (!password) {
             return res.status(404).json({
-                success : false,
-                message : "Please enter the password"
+                success: false,
+                message: "Please enter the password"
             })
         }
         if (!email) {
             return res.status(404).json({
-                success : false,
-                message : "Please enter the email"
+                success: false,
+                message: "Please enter the email"
             })
         }
 
-        const checkForExistingUser = await User.findOne({email})
+        const checkForExistingUser = await User.findOne({ email })
 
-        if(checkForExistingUser){
+        if (checkForExistingUser) {
             return res.status(400).json({
-                success : false,
-                message : "User already registered with this email",
+                success: false,
+                message: "User already registered with this email",
             })
         }
 
@@ -37,67 +38,83 @@ async function createUser(req, res) {
         const newUser = await User.create({
             name,
             email,
-            password : hashedPass
+            password: hashedPass
+        })
+
+        let token = await generateJWT({
+            email: newUser.email,
+            id: newUser._id
         })
 
         return res.status(200).json({
-            success : true,
-            message : "User created successfully",
-            newUser
+            success: true,
+            message: "User created successfully",
+            user: {
+                name: newUser.name,
+                email: newUser.email,
+                blogs: newUser.blogs
+            },
+            token
         })
     } catch (err) {
         return res.status(500).json({
-            success : false,
-            message : "Please try again",
-            error : err.message
+            success: false,
+            message: "Please try again",
+            error: err.message
         })
     }
 }
 
 async function login(req, res) {
-    const {password, email} = req.body
+    const { password, email } = req.body
     try {
         if (!password) {
             return res.status(404).json({
-                success : false,
-                message : "Please enter the password"
+                success: false,
+                message: "Please enter the password"
             })
         }
         if (!email) {
             return res.status(404).json({
-                success : false,
-                message : "Please enter the email"
+                success: false,
+                message: "Please enter the email"
             })
         }
 
-        const checkForExistingUser = await User.findOne({email})
+        const checkForExistingUser = await User.findOne({ email })
 
-        if(!checkForExistingUser){
+        if (!checkForExistingUser) {
             return res.status(400).json({
-                success : false,
-                message : "User not exist",
+                success: false,
+                message: "User not exist",
             })
         }
 
         let checkForPass = await bcrypt.compare(password, checkForExistingUser.password)
-        
-        if(!checkForPass){
+
+        if (!checkForPass) {
             return res.status(400).json({
-                success : false,
-                message : "Inncorrect password",
+                success: false,
+                message: "Inncorrect password",
             })
         }
 
+        let token = await generateJWT({
+            email: checkForExistingUser.email,
+            id: checkForExistingUser._id
+        })
+
         return res.status(200).json({
-            success : true,
-            message : "Logged in successfully",
-            checkForExistingUser
+            success: true,
+            message: "Logged in successfully",
+            user: checkForExistingUser,
+            token
         })
     } catch (err) {
         return res.status(500).json({
-            success : false,
-            message : "Please try again",
-            error : err.message
+            success: false,
+            message: "Please try again",
+            error: err.message
         })
     }
 }
@@ -109,15 +126,15 @@ async function getAllUser(req, res) {
 
         // db call
         return res.status(200).json({
-            success : true,
-            message : "User fetched successfully",
-            users
+            success: true,
+            message: "User fetched successfully",
+            user: users
         })
-        
+
     } catch (err) {
         return res.status(500).json({
-            success : false,
-            message : "Please try again"
+            success: false,
+            message: "Please try again"
         })
     }
 }
@@ -135,24 +152,24 @@ async function getUserById(req, res) {
         // console.log(user._id)
         // console.log(user.id)
 
-        if(!user){
+        if (!user) {
             return res.status(200).json({
-                success : false,
-                message : "User not found",
+                success: false,
+                message: "User not found",
             })
         }
 
         return res.status(200).json({
-            success : true,
-            message : "User fetched successfully",
+            success: true,
+            message: "User fetched successfully",
             user
         })
-        
+
     } catch (err) {
         return res.status(500).json({
-            success : false,
-            message : "Please try again",
-            error : err.message
+            success: false,
+            message: "Please try again",
+            error: err.message
         })
     }
 }
@@ -161,30 +178,30 @@ async function updateUser(req, res) {
     try {
         const id = req.params.id
 
-        const {name, password, email} = req.body
+        const { name, password, email } = req.body
 
         const updatedUser = await User.findByIdAndUpdate(
-            id, 
-            {name, password, email}, 
-            { new : true }
+            id,
+            { name, password, email },
+            { new: true }
         )
 
-        if(!updatedUser){
+        if (!updatedUser) {
             return res.status(200).json({
-                success : false,
-                message : "User not found",
+                success: false,
+                message: "User not found",
             })
         }
 
         return res.status(200).json({
-            success : true,
-            message : "User updated successfully",
-            updatedUser
+            success: true,
+            message: "User updated successfully",
+            user: updatedUser
         })
     } catch (err) {
         return res.status(500).json({
-            success : false,
-            message : "Please try again"
+            success: false,
+            message: "Please try again"
         })
     }
 }
@@ -195,25 +212,25 @@ async function deleteUser(req, res) {
 
         const deletedUser = await User.findByIdAndDelete(id)
 
-        if(!deletedUser){
+        if (!deletedUser) {
             return res.status(200).json({
-                success : false,
-                message : "User not found",
+                success: false,
+                message: "User not found",
             })
         }
 
         return res.status(200).json({
-            success : true,
-            message : "User deleted successfully",
-            deletedUser
+            success: true,
+            message: "User deleted successfully",
+            user: deletedUser
         })
         // let filteredUser = users.filter(user => user.id != req.params.id)
         // users = [...filteredUser]
         // return res.status(200).json({"message" : "user deleted successfully"})
     } catch (err) {
         return res.status(500).json({
-            success : false,
-            message : "Please try again"
+            success: false,
+            message: "Please try again"
         })
     }
 }
