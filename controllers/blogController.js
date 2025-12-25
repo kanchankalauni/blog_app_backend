@@ -1,20 +1,14 @@
 const Blog = require("../models/blogSchema")
 const User = require("../models/userSchema")
-const { verifyJWT, decodeJWT } = require("../utils/generateToken")
+
+// Safe Controller
 
 async function createBlog(req, res) {
     try {
-        console.log(await decodeJWT(req.body.token))
 
-        let isValid = await verifyJWT(req.body.token)
+        const creator = req.user
 
-        if(!isValid){
-            return res.status(200).json({
-                message : "Invalid Token"
-            })
-        }
-
-        const {title, description, draft, creator} = req.body
+        const {title, description, draft} = req.body
         // console.log(req.body)
         if(!title){
             return res.status(200).json({

@@ -7,8 +7,8 @@ async function generateJWT(payload) {
 
 async function verifyJWT(token) {
     try {
-        let isValid = await jwt.verify(token, "jwtsecretToken")
-        return true
+        let data = await jwt.verify(token, "jwtsecretToken")
+        return data
     } catch (err) {
         return false
     }
