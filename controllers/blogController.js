@@ -90,6 +90,13 @@ async function updateBlog(req, res) {
 
         const blog = await Blog.findById(id)
 
+        if(!blog){
+            return res.status(500).json({
+                success : false,
+                message : "Blog not found",
+            })
+        }
+
         if(!(creator == blog.creator)){
             return res.status(500).json({
                 message : "You are not authorized for this action",
@@ -122,21 +129,31 @@ async function updateBlog(req, res) {
 
 async function deleteBlog(req, res) {
     try {
+        const creator = req.user
         const {id} = req.params
 
-        const deletedBlog = await Blog.findByIdAndDelete(id)
+        const blog = await Blog.findById(id)
 
-        if(!deletedBlog){
-            return res.status(200).json({
+        if(!blog){
+            return res.status(500).json({
                 success : false,
                 message : "Blog not found",
             })
         }
 
+        if(creator != blog.creator){
+            return res.status(500).json({
+                success : false,
+                message : "You are not authorized for this action",
+            })
+        }
+
+        await Blog.findByIdAndDelete(id)
+        await User.findByIdAndUpdate(creator, {$pull : {blogs : id}})
+
         return res.status(200).json({
             success : true,
-            message : "Blog deleted successfully",
-            deletedBlog
+            message : "Blog deleted successfully"
         })
     } catch (err) {
         return res.status(500).json({
