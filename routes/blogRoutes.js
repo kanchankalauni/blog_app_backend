@@ -10,7 +10,7 @@ route.get("/blogs", getAllBlog)
 
 route.get("/blogs/:id", getBlogById)
 
-route.put("/blogs/:id", updateBlog)
+route.put("/blogs/:id", verifyUser, updateBlog)
 
 route.delete("/blogs/:id", deleteBlog)
 

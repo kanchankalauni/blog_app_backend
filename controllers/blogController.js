@@ -54,7 +54,7 @@ async function getAllBlog(req, res) {
         })
         return res.status(200).json({
             message : "Blog fetched successfully",
-            blogs
+            blog : blogs
         })
     } catch (err) {
         return res.status(500).json({
@@ -69,7 +69,7 @@ async function getBlogById(req, res) {
         const blogs = await Blog.findById(id)
         return res.status(200).json({
             message : "Blog fetched successfully",
-            blogs
+            blog : blogs
         })
     } catch (err) {
         return res.status(500).json({
@@ -80,27 +80,38 @@ async function getBlogById(req, res) {
 
 async function updateBlog(req, res) {
     try {
+        const creator = req.user
         const {id} = req.params
 
-        const {title, description, draft, creator} = req.body
+        const {title, description, draft} = req.body
 
-        const updatedBlog = await Blog.findByIdAndUpdate(
-            id, 
-            {title, description, draft, creator}, 
-            { new : true }
-        )
+        // const user = await User.findById(creator).select("-password")
+        // console.log(user.blogs.find(blodId => blodId === id))
 
-        if(!updatedBlog){
-            return res.status(200).json({
-                success : false,
-                message : "Blog not found",
+        const blog = await Blog.findById(id)
+
+        if(!(creator == blog.creator)){
+            return res.status(500).json({
+                message : "You are not authorized for this action",
             })
         }
+
+        // const updatedBlog = await Blog.updateOne(
+        //     {_id : id}, 
+        //     {title, description, draft}, 
+        //     { new : true }
+        // )
+
+        blog.title = title || blog.title;
+        blog.description = description || blog.description;
+        blog.draft = draft || blog.draft;
+
+        await blog.save()
 
         return res.status(200).json({
             success : true,
             message : "Blog updated successfully",
-            updatedBlog
+            blog
         })
     } catch (err) {
         return res.status(500).json({
