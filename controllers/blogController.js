@@ -1,4 +1,5 @@
 const Blog = require("../models/blogSchema")
+const Comment = require("../models/commentSchema")
 const User = require("../models/userSchema")
 
 // Safe Controller
@@ -52,8 +53,8 @@ async function getAllBlog(req, res) {
             select: "name",
             // select : "-password"
         }).populate({
-            path : "likes",
-            select : "email name"
+            path: "likes",
+            select: "email name"
         })
         return res.status(200).json({
             message: "Blog fetched successfully",
@@ -69,7 +70,13 @@ async function getAllBlog(req, res) {
 async function getBlogById(req, res) {
     try {
         const { id } = req.params
-        const blogs = await Blog.findById(id)
+        const blogs = await Blog.findById(id).populate({
+            path : "comments",
+            populate : {
+                path : "user",
+                select : "name email"
+            }
+        })
         return res.status(200).json({
             message: "Blog fetched successfully",
             blog: blogs
@@ -180,13 +187,13 @@ async function likeBlog(req, res) {
         }
 
         if (!blog.likes.includes(creator)) {
-            await Blog.findByIdAndUpdate(id, {$push : {likes : creator}})
+            await Blog.findByIdAndUpdate(id, { $push: { likes: creator } })
             return res.status(200).json({
                 success: true,
                 message: "Blog liked successfully"
             })
         } else {
-            await Blog.findByIdAndUpdate(id, {$pull : {likes : creator}})
+            await Blog.findByIdAndUpdate(id, { $pull: { likes: creator } })
             return res.status(200).json({
                 success: true,
                 message: "Blog unliked successfully"
@@ -205,5 +212,5 @@ module.exports = {
     getBlogById,
     updateBlog,
     deleteBlog,
-    likeBlog
+    likeBlog,
 }
